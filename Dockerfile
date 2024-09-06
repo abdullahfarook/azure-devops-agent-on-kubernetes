@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM cruizba/ubuntu-dind:focal-latest
 
 
 # To make it easier for build and release pipelines to run apt-get,
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get -y upgrade
 
 RUN curl -LsS https://aka.ms/InstallAzureCLIDeb | bash \
-  && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 RUN az extension add --name azure-devops
 
@@ -55,18 +55,18 @@ RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/pac
 RUN apt-get update \
     && apt-get install -y powershell
 
-#install docker cli
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-RUN echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-      $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-RUN apt-get update \
-    && apt-get install -y docker-ce-cli
+RUN wget -q "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb" \
+    && dpkg -i cloudflared-linux-amd64.deb
 
+RUN curl -LO "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64" \
+    && mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss \
+    && chmod +x /usr/local/bin/tailwindcss
+
+RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash \
+    && mv kustomize /usr/local/bin/kustomize \
+    && chmod +x /usr/local/bin/kustomize
+   
 RUN apt-get update && apt-get -y upgrade
-
-COPY ./start.sh .
-RUN chmod +x start.sh
 RUN curl -LsS https://vstsagentpackage.azureedge.net/agent/3.232.3/vsts-agent-linux-x64-3.232.3.tar.gz | tar -xz
 
 # Create and swith to non-root user
@@ -83,7 +83,16 @@ USER azuredevops
 
 # Create docker user group and utilize it
 RUN sudo groupadd docker
-RUN sudo usermod -aG docker azuredevops
+RUN sudo usermod -aG docker azuredevops || true
 RUN sudo newgrp docker
 
+
+# RUN cd /azp
+# CMD tail -f /dev/null
+# RUN echo "dummy" > /azp/.token
+# RUN apt-get update \
+#     && apt-get install -y sudo
+COPY ./start.sh .
+RUN sudo chmod +x start.sh
 ENTRYPOINT ["./start.sh"]
+# CMD ["bash"]
