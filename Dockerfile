@@ -55,6 +55,20 @@ RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/pac
 RUN apt-get update \
     && apt-get install -y powershell
 
+#install cloudflared
+RUN wget -q "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb" \
+    && dpkg -i cloudflared-linux-amd64.deb
+
+#install tailwindcss
+RUN curl -LO "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64" \
+    && mv tailwindcss-linux-x64 /usr/local/bin/tailwindcss \
+    && chmod +x /usr/local/bin/tailwindcss
+
+#install kustomize
+RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash \
+    && mv kustomize /usr/local/bin/kustomize \
+    && chmod +x /usr/local/bin/kustomize    
+
 #install docker cli
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 RUN echo \
